@@ -64,6 +64,28 @@
             transform: scale(1.05);
         }
 
+        /* Search Bar */
+        .search-bar {
+            max-width: 1400px;
+            margin: 1rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-bar input:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+
         /* Video Grid (Home Page) */
         .video-grid {
             max-width: 1400px;
@@ -110,6 +132,12 @@
             position: absolute;
             opacity: 0.3;
             z-index: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .video-card .thumbnail-placeholder:hover::before {
+            transform: scale(1.2);
+            opacity: 0.5;
         }
 
         .video-card .video-info {
@@ -181,6 +209,11 @@
             border-radius: 12px;
             background: #000;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            aspect-ratio: 16 / 9;
+        }
+
+        .video-player.playing video {
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
         }
 
         .video-player h2 {
@@ -195,13 +228,16 @@
             margin: 1rem 0;
         }
 
-        .video-player .actions a {
+        .video-player .actions a, .video-player .actions button {
             color: #3498db;
             text-decoration: none;
             font-size: 1rem;
+            background: none;
+            border: none;
+            cursor: pointer;
         }
 
-        .video-player .actions a:hover {
+        .video-player .actions a:hover, .video-player .actions button:hover {
             text-decoration: underline;
         }
 
@@ -249,15 +285,12 @@
             content: '▶';
             font-size: 1.5rem;
             opacity: 0.3;
+            transition: transform 0.3s ease, opacity 0.3s ease;
         }
 
-        .recommendation-card h4 {
-            font-size: 0.95rem;
-            color: #333;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+        .recommendation-card .thumbnail-placeholder:hover::before {
+            transform: scale(1.2);
+            opacity: 0.5;
         }
 
         /* Loading and Error */
@@ -271,10 +304,11 @@
             border: 4px solid #f3f3f3;
             border-top: 4px solid #3498db;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
+            width: 40px;
+            height: 40px;
             animation: spin 1s linear infinite;
-            margin: 0 auto;
+            margin: 1rem auto;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
         .error {
@@ -301,11 +335,16 @@
         }
 
         @media (max-width: 600px) {
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+            }
             .header h1 {
                 font-size: 1.6rem;
             }
             .video-grid {
                 grid-template-columns: 1fr;
+                gap: 1rem;
             }
             .video-card .thumbnail-placeholder {
                 height: 200px;
@@ -315,8 +354,12 @@
 </head>
 <body>
 <div class="header">
-    <h1><a href="/">🎥 GoStream</a></h1>
-    <a href="/upload.html" class="upload-link">Upload Videos</a>
+    <h1><a href="/" aria-label="Go to GoStream homepage">🎥 GoStream</a></h1>
+    <a href="/upload.html" class="upload-link" aria-label="Upload a video">Upload Videos</a>
+</div>
+
+<div class="search-bar">
+    <input type="text" id="searchInput" placeholder="Search videos..." aria-label="Search for videos by name">
 </div>
 
 <div class="loading" id="loading">
@@ -328,11 +371,12 @@
 <div class="video-page" id="videoPage" style="display: none;">
     <div class="video-player">
         <div class="actions">
-            <a href="/" class="home-link">Back to Home</a>
-            <a id="downloadLink" href="#" class="home-link">Download Video</a>
+            <a href="/" class="home-link" aria-label="Back to homepage">Back to Home</a>
+            <a id="downloadLink" href="#" class="home-link" aria-label="Download current video">Download Video</a>
+            <button id="copyLink" aria-label="Copy video link to clipboard">Copy Link</button>
         </div>
         <h2 id="videoTitle"></h2>
-        <video id="player" controls></video>
+        <video id="player" controls aria-label="Video player"></video>
     </div>
     <div class="recommendations">
         <h3>Recommended Videos</h3>
@@ -349,8 +393,20 @@
     const errorDiv = document.getElementById('error');
     const loadingDiv = document.getElementById('loading');
     const downloadLink = document.getElementById('downloadLink');
+    const copyLinkButton = document.getElementById('copyLink');
+    const searchInput = document.getElementById('searchInput');
 
     let allVideos = [];
+    let filteredVideos = [];
+
+    // Debounce utility
+    function debounce(func, wait) {
+        let timeout;
+        return function (...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
 
     // Fetch video list
     async function loadVideos() {
@@ -362,6 +418,7 @@
                 throw new Error(`Failed to fetch videos: ${response.statusText}`);
             }
             allVideos = await response.json();
+            filteredVideos = allVideos;
             loadingDiv.style.display = 'none';
             if (allVideos.length === 0) {
                 errorDiv.textContent = 'No videos found.';
@@ -375,23 +432,33 @@
         }
     }
 
-    // Render video grid on home page
-    function renderVideoGrid() {
+    // Render video grid
+    function renderVideoGrid(videos = filteredVideos) {
         videoGrid.innerHTML = '';
-        allVideos.forEach(video => {
+        if (videos.length === 0) {
+            errorDiv.textContent = 'No videos match your search.';
+            return;
+        }
+        videos.forEach(video => {
             const card = document.createElement('div');
             card.className = 'video-card';
             card.innerHTML = `
-                    <div class="thumbnail-placeholder" onclick="showVideoPage('${video.url}', '${video.name}')"></div>
+                    <div class="thumbnail-placeholder" onclick="showVideoPage('${video.url}', '${video.name}')" tabindex="0" role="button" aria-label="Play ${video.name}"></div>
                     <div class="video-info">
                         <h3>${video.name}</h3>
                         <div class="buttons">
-                            <button onclick="showVideoPage('${video.url}', '${video.name}')">Watch</button>
-                            <a href="${video.url}?download=true" download="${video.name}">Download</a>
+                            <button onclick="showVideoPage('${video.url}', '${video.name}')" aria-label="Watch ${video.name}">Watch</button>
+                            <a href="${video.url}?download=true" download="${video.name}" aria-label="Download ${video.name}">Download</a>
                         </div>
                     </div>
                 `;
             videoGrid.appendChild(card);
+            // Enable keyboard interaction for thumbnails
+            card.querySelector('.thumbnail-placeholder').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    showVideoPage(video.url, video.name);
+                }
+            });
         });
     }
 
@@ -404,12 +471,13 @@
         player.src = url;
         downloadLink.href = `${url}?download=true`;
         downloadLink.setAttribute('download', name);
+        player.parentElement.classList.add('playing');
         player.play().catch(err => {
             errorDiv.textContent = `Error playing video: ${err.message}`;
             console.error('Playback error:', err);
         });
 
-        // Render recommendations (all other videos)
+        // Render recommendations
         recommendations.innerHTML = '';
         allVideos
             .filter(video => video.url !== url)
@@ -417,12 +485,17 @@
                 const recCard = document.createElement('div');
                 recCard.className = 'recommendation-card';
                 recCard.innerHTML = `
-                        <div class="thumbnail-placeholder" onclick="showVideoPage('${video.url}', '${video.name}')"></div>
+                        <div class="thumbnail-placeholder" tabindex="0" role="button" aria-label="Play ${video.name}"></div>
                         <div>
                             <h4>${video.name}</h4>
                         </div>
                     `;
                 recCard.onclick = () => showVideoPage(video.url, video.name);
+                recCard.querySelector('.thumbnail-placeholder').addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        showVideoPage(video.url, video.name);
+                    }
+                });
                 recommendations.appendChild(recCard);
             });
     }
@@ -431,18 +504,13 @@
     function handleHomeNavigation() {
         videoGrid.style.display = 'grid';
         videoPage.style.display = 'none';
+        player.parentElement.classList.remove('playing');
         history.pushState({ page: 'home' }, '', '/');
         document.title = 'GoStream';
+        searchInput.value = '';
+        filteredVideos = allVideos;
+        renderVideoGrid();
     }
-
-    // Handle browser back/forward navigation
-    window.onpopstate = function(event) {
-        if (event.state && event.state.page === 'video') {
-            showVideoPage(event.state.url, event.state.name);
-        } else {
-            handleHomeNavigation();
-        }
-    };
 
     // Handle clicks on home links
     document.querySelectorAll('.home-link, .header h1 a').forEach(link => {
@@ -452,9 +520,40 @@
         });
     });
 
+    // Copy video link to clipboard
+    copyLinkButton.addEventListener('click', () => {
+        const videoUrl = window.location.href;
+        navigator.clipboard.writeText(videoUrl).then(() => {
+            copyLinkButton.textContent = 'Link Copied!';
+            setTimeout(() => {
+                copyLinkButton.textContent = 'Copy Link';
+            }, 2000);
+        }).catch(err => {
+            errorDiv.textContent = `Failed to copy link: ${err.message}`;
+            console.error('Copy error:', err);
+        });
+    });
+
+    // Search functionality
+    searchInput.addEventListener('input', debounce(() => {
+        const query = searchInput.value.toLowerCase();
+        filteredVideos = allVideos.filter(video => video.name.toLowerCase().includes(query));
+        errorDiv.textContent = '';
+        renderVideoGrid();
+    }, 300));
+
     // Handle video errors
     player.addEventListener('error', () => {
         errorDiv.textContent = `Video error: ${player.error ? player.error.message : 'Unknown error'}`;
+        player.parentElement.classList.remove('playing');
+    });
+
+    // Update playing state
+    player.addEventListener('play', () => {
+        player.parentElement.classList.add('playing');
+    });
+    player.addEventListener('pause', () => {
+        player.parentElement.classList.remove('playing');
     });
 
     // Load videos on page load
