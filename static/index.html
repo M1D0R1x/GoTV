@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoStream</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: #ecf0f1;
+            padding: 2rem;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Header Section */
+        h1 {
+            text-align: center;
+            color: #fff;
+            margin-bottom: 2.5rem;
+            font-size: 2.8rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 1s ease-in;
+        }
+
+        /* Video Player */
+        .video-container {
+            max-width: 900px;
+            margin: 0 auto 2.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+        }
+        video {
+            width: 100%;
+            display: block;
+            background: #000;
+            border-radius: 10px;
+        }
+
+        /* Loading Spinner */
+        .loading {
+            text-align: center;
+            color: #fff;
+            font-size: 1.2rem;
+            margin: 1rem 0;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+            display: none;
+        }
+        .loading.show .spinner {
+            display: inline-block;
+        }
+
+        /* Error Message */
+        .error {
+            text-align: center;
+            color: #e74c3c;
+            margin: 1rem auto;
+            max-width: 900px;
+            padding: 1.5rem;
+            background: rgba(231, 76, 60, 0.1);
+            border-radius: 10px;
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+        .error.show {
+            display: block;
+        }
+
+        /* Video List */
+        .video-list {
+            max-width: 900px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .video-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .video-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .video-card button {
+            width: 100%;
+            padding: 1.2rem;
+            border: none;
+            background: #3498db;
+            color: #fff;
+            font-size: 1.1rem;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .video-card button:hover {
+            background: #2980b9;
+            transform: scale(1.02);
+        }
+
+        .video-card .video-details {
+            padding: 1.2rem;
+            background: rgba(255, 255, 255, 0.03);
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+
+        .video-card.active .video-details {
+            max-height: 150px; /* Adjustable based on content */
+            padding: 1.2rem;
+        }
+
+        .video-details p {
+            color: #bdc3c7;
+            font-size: 0.9rem;
+            margin: 0.5rem 0;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+            .video-container, .video-list {
+                max-width: 100%;
+            }
+            .video-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<h1>🎥 GoStream</h1>
+<div class="video-container">
+    <video id="player" controls></video>
+</div>
+<div class="loading" id="loading">
+    <span>Loading videos...</span>
+    <div class="spinner"></div>
+</div>
+<div class="error" id="error"></div>
+<div class="video-list" id="videoList"></div>
+
+<script>
+    const player = document.getElementById('player');
+    const videoList = document.getElementById('videoList');
+    const errorDiv = document.getElementById('error');
+    const loadingDiv = document.getElementById('loading');
+
+    // Show loading spinner
+    loadingDiv.classList.add('show');
+
+    // Fetch video list
+    fetch('/videos')
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`Failed to fetch videos: ${res.status} ${res.statusText}`);
+            }
+            return res.json();
+        })
+        .then(data => {
+            loadingDiv.classList.remove('show');
+            if (data.length === 0) {
+                errorDiv.textContent = 'No videos found.';
+                errorDiv.classList.add('show');
+                return;
+            }
+            data.forEach(video => {
+                const card = document.createElement('div');
+                card.className = 'video-card';
+
+                const btn = document.createElement('button');
+                btn.textContent = video.name;
+                btn.onclick = () => {
+                    errorDiv.textContent = '';
+                    errorDiv.classList.remove('show');
+                    player.src = video.url;
+                    player.play().catch(err => {
+                        errorDiv.textContent = `Error playing video: ${err.message}`;
+                        errorDiv.classList.add('show');
+                        console.error('Playback error:', err);
+                    });
+                    card.classList.toggle('active');
+                };
+
+                const downloadBtn = document.createElement('button');
+                downloadBtn.textContent = 'Download';
+                downloadBtn.onclick = (e) => {
+                    e.stopPropagation(); // Prevent card activation
+                    const link = document.createElement('a');
+                    link.href = video.url + '?download=true'; // Signal download intent
+                    link.download = video.name; // Set filename
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                };
+
+                const details = document.createElement('div');
+                details.className = 'video-details';
+                // Placeholder for future details
+                // details.innerHTML = `<p>Duration: ${video.duration || 'N/A'}</p><p>${video.description || 'No description'}</p>`;
+
+                card.appendChild(btn);
+                card.appendChild(downloadBtn); // Add download button
+                card.appendChild(details);
+                videoList.appendChild(card);
+            });
+        })
+        .catch(err => {
+            loadingDiv.classList.remove('show');
+            errorDiv.textContent = `Error loading video list: ${err.message}`;
+            errorDiv.classList.add('show');
+            console.error('Fetch error:', err);
+        });
+
+    // Log video errors
+    player.addEventListener('error', () => {
+        errorDiv.textContent = `Video error: ${player.error ? player.error.message : 'Unknown error'}`;
+        errorDiv.classList.add('show');
+    });
+</script>
+</body>
+</html>
