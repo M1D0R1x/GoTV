@@ -91,7 +91,8 @@
             max-width: 1400px;
             margin: 2rem auto;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 400px));
+            justify-content: center;
             gap: 1.5rem;
             padding: 0 1.5rem;
         }
@@ -104,6 +105,7 @@
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             cursor: pointer;
             position: relative;
+            max-width: 400px;
         }
 
         .video-card:hover {
@@ -343,7 +345,7 @@
                 font-size: 1.6rem;
             }
             .video-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: minmax(300px, 400px);
                 gap: 1rem;
             }
             .video-card .thumbnail-placeholder {
