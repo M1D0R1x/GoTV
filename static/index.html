@@ -40,7 +40,16 @@
             gap: 0.5rem;
         }
 
-        .header a {
+        .header h1 a {
+            color: #e74c3c;
+            text-decoration: none;
+        }
+
+        .header h1 a:hover {
+            text-decoration: underline;
+        }
+
+        .header a.upload-link {
             color: #fff;
             background: #3498db;
             text-decoration: none;
@@ -50,7 +59,7 @@
             transition: background 0.3s ease, transform 0.2s ease;
         }
 
-        .header a:hover {
+        .header a.upload-link:hover {
             background: #2980b9;
             transform: scale(1.05);
         }
@@ -306,8 +315,8 @@
 </head>
 <body>
 <div class="header">
-    <h1>🎥 GoStream</h1>
-    <a href="/upload.html">Upload Videos</a>
+    <h1><a href="/">🎥 GoStream</a></h1>
+    <a href="/upload.html" class="upload-link">Upload Videos</a>
 </div>
 
 <div class="loading" id="loading">
@@ -418,16 +427,30 @@
             });
     }
 
+    // Handle browser back/forward navigation and home link clicks
+    function handleHomeNavigation() {
+        videoGrid.style.display = 'grid';
+        videoPage.style.display = 'none';
+        history.pushState({ page: 'home' }, '', '/');
+        document.title = 'GoStream';
+    }
+
     // Handle browser back/forward navigation
     window.onpopstate = function(event) {
         if (event.state && event.state.page === 'video') {
             showVideoPage(event.state.url, event.state.name);
         } else {
-            videoGrid.style.display = 'grid';
-            videoPage.style.display = 'none';
-            history.pushState({ page: 'home' }, '', '/');
+            handleHomeNavigation();
         }
     };
+
+    // Handle clicks on home links
+    document.querySelectorAll('.home-link, .header h1 a').forEach(link => {
+        link.addEventListener('click', (event) => {
+            event.preventDefault();
+            handleHomeNavigation();
+        });
+    });
 
     // Handle video errors
     player.addEventListener('error', () => {
