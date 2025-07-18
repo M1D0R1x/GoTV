@@ -13,50 +13,252 @@
 
         body {
             font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #2c3e50, #3498db);
-            color: #ecf0f1;
-            padding: 2rem;
+            background: #f9f9f9;
+            color: #333;
             min-height: 100vh;
             line-height: 1.6;
         }
 
-        /* Header Section */
-        h1 {
-            text-align: center;
+        /* Header */
+        .header {
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: #e74c3c;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header a {
             color: #fff;
-            margin-bottom: 2.5rem;
-            font-size: 2.8rem;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-            animation: fadeIn 1s ease-in;
+            background: #3498db;
+            text-decoration: none;
+            font-size: 1rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            transition: background 0.3s ease, transform 0.2s ease;
         }
 
-        /* Video Player */
-        .video-container {
-            max-width: 900px;
-            margin: 0 auto 2.5rem;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        .header a:hover {
+            background: #2980b9;
+            transform: scale(1.05);
+        }
+
+        /* Video Grid (Home Page) */
+        .video-grid {
+            max-width: 1400px;
+            margin: 2rem auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            padding: 0 1.5rem;
+        }
+
+        .video-card {
+            background: #fff;
+            border-radius: 12px;
             overflow: hidden;
-            backdrop-filter: blur(5px);
-        }
-        video {
-            width: 100%;
-            display: block;
-            background: #000;
-            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            position: relative;
         }
 
-        /* Loading Spinner */
-        .loading {
-            text-align: center;
+        .video-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .video-card .thumbnail-placeholder {
+            width: 100%;
+            height: 180px;
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: #fff;
             font-size: 1.2rem;
+            text-align: center;
+            padding: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .video-card .thumbnail-placeholder::before {
+            content: '▶';
+            font-size: 2rem;
+            position: absolute;
+            opacity: 0.3;
+            z-index: 0;
+        }
+
+        .video-card .video-info {
+            padding: 1rem;
+            background: #fff;
+        }
+
+        .video-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: #333;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .video-card .buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .video-card .buttons a, .video-card .buttons button {
+            flex: 1;
+            padding: 0.5rem;
+            text-align: center;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: background 0.3s ease;
+        }
+
+        .video-card .buttons a {
+            background: #3498db;
+            color: #fff;
+        }
+
+        .video-card .buttons a:hover {
+            background: #2980b9;
+        }
+
+        .video-card .buttons button {
+            background: #ecf0f1;
+            color: #333;
+            border: 1px solid #ddd;
+            cursor: pointer;
+        }
+
+        .video-card .buttons button:hover {
+            background: #dfe6e9;
+        }
+
+        /* Video Page */
+        .video-page {
+            max-width: 1400px;
+            margin: 2rem auto;
+            display: flex;
+            gap: 2rem;
+            padding: 0 1.5rem;
+        }
+
+        .video-player {
+            flex: 3;
+        }
+
+        .video-player video {
+            width: 100%;
+            border-radius: 12px;
+            background: #000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .video-player h2 {
+            font-size: 1.8rem;
+            margin: 1rem 0;
+            color: #333;
+        }
+
+        .video-player .actions {
+            display: flex;
+            gap: 1rem;
             margin: 1rem 0;
         }
-        .spinner {
+
+        .video-player .actions a {
+            color: #3498db;
+            text-decoration: none;
+            font-size: 1rem;
+        }
+
+        .video-player .actions a:hover {
+            text-decoration: underline;
+        }
+
+        .recommendations {
+            flex: 1;
+            max-width: 350px;
+        }
+
+        .recommendations h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .recommendation-card {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            background: #fff;
+            padding: 0.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .recommendation-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .recommendation-card .thumbnail-placeholder {
+            width: 120px;
+            height: 68px;
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 0.9rem;
+            border-radius: 5px;
+            position: relative;
+        }
+
+        .recommendation-card .thumbnail-placeholder::before {
+            content: '▶';
+            font-size: 1.5rem;
+            opacity: 0.3;
+        }
+
+        .recommendation-card h4 {
+            font-size: 0.95rem;
+            color: #333;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Loading and Error */
+        .loading, .error {
+            text-align: center;
+            margin: 2rem 0;
+            font-size: 1.2rem;
+        }
+
+        .loading .spinner {
             border: 4px solid #f3f3f3;
             border-top: 4px solid #3498db;
             border-radius: 50%;
@@ -64,92 +266,15 @@
             height: 30px;
             animation: spin 1s linear infinite;
             margin: 0 auto;
-            display: none;
-        }
-        .loading.show .spinner {
-            display: inline-block;
         }
 
-        /* Error Message */
         .error {
-            text-align: center;
             color: #e74c3c;
-            margin: 1rem auto;
-            max-width: 900px;
-            padding: 1.5rem;
-            background: rgba(231, 76, 60, 0.1);
-            border-radius: 10px;
-            display: none;
-            animation: fadeIn 0.5s ease-in;
-        }
-        .error.show {
-            display: block;
-        }
-
-        /* Video List */
-        .video-list {
-            max-width: 900px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
-        }
-
-        .video-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            cursor: pointer;
-        }
-
-        .video-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        .video-card button {
-            width: 100%;
-            padding: 1.2rem;
-            border: none;
-            background: #3498db;
-            color: #fff;
-            font-size: 1.1rem;
-            text-align: left;
-            cursor: pointer;
-            transition: background 0.3s ease, transform 0.2s ease;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .video-card button:hover {
-            background: #2980b9;
-            transform: scale(1.02);
-        }
-
-        .video-card .video-details {
-            padding: 1.2rem;
-            background: rgba(255, 255, 255, 0.03);
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease, padding 0.3s ease;
-        }
-
-        .video-card.active .video-details {
-            max-height: 150px; /* Adjustable based on content */
-            padding: 1.2rem;
-        }
-
-        .video-details p {
-            color: #bdc3c7;
-            font-size: 0.9rem;
-            margin: 0.5rem 0;
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            background: #ffe6e6;
+            padding: 1rem;
+            border-radius: 8px;
+            max-width: 1400px;
+            margin: 2rem auto;
         }
 
         @keyframes spin {
@@ -157,109 +282,160 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Responsive Design */
-        @media (max-width: 600px) {
-            h1 {
-                font-size: 2.2rem;
+        @media (max-width: 900px) {
+            .video-page {
+                flex-direction: column;
             }
-            .video-container, .video-list {
+            .recommendations {
                 max-width: 100%;
             }
-            .video-list {
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.6rem;
+            }
+            .video-grid {
                 grid-template-columns: 1fr;
+            }
+            .video-card .thumbnail-placeholder {
+                height: 200px;
             }
         }
     </style>
 </head>
 <body>
-<h1>🎥 GoStream</h1>
-<div class="video-container">
-    <video id="player" controls></video>
+<div class="header">
+    <h1>🎥 GoStream</h1>
+    <a href="/upload.html">Upload Videos</a>
 </div>
+
 <div class="loading" id="loading">
     <span>Loading videos...</span>
     <div class="spinner"></div>
 </div>
 <div class="error" id="error"></div>
-<div class="video-list" id="videoList"></div>
+<div class="video-grid" id="videoGrid"></div>
+<div class="video-page" id="videoPage" style="display: none;">
+    <div class="video-player">
+        <div class="actions">
+            <a href="/" class="home-link">Back to Home</a>
+            <a id="downloadLink" href="#" class="home-link">Download Video</a>
+        </div>
+        <h2 id="videoTitle"></h2>
+        <video id="player" controls></video>
+    </div>
+    <div class="recommendations">
+        <h3>Recommended Videos</h3>
+        <div id="recommendations"></div>
+    </div>
+</div>
 
 <script>
+    const videoGrid = document.getElementById('videoGrid');
+    const videoPage = document.getElementById('videoPage');
     const player = document.getElementById('player');
-    const videoList = document.getElementById('videoList');
+    const videoTitle = document.getElementById('videoTitle');
+    const recommendations = document.getElementById('recommendations');
     const errorDiv = document.getElementById('error');
     const loadingDiv = document.getElementById('loading');
+    const downloadLink = document.getElementById('downloadLink');
 
-    // Show loading spinner
-    loadingDiv.classList.add('show');
+    let allVideos = [];
 
     // Fetch video list
-    fetch('/videos')
-        .then(res => {
-            if (!res.ok) {
-                throw new Error(`Failed to fetch videos: ${res.status} ${res.statusText}`);
+    async function loadVideos() {
+        loadingDiv.style.display = 'block';
+        errorDiv.textContent = '';
+        try {
+            const response = await fetch('/videos');
+            if (!response.ok) {
+                throw new Error(`Failed to fetch videos: ${response.statusText}`);
             }
-            return res.json();
-        })
-        .then(data => {
-            loadingDiv.classList.remove('show');
-            if (data.length === 0) {
+            allVideos = await response.json();
+            loadingDiv.style.display = 'none';
+            if (allVideos.length === 0) {
                 errorDiv.textContent = 'No videos found.';
-                errorDiv.classList.add('show');
                 return;
             }
-            data.forEach(video => {
-                const card = document.createElement('div');
-                card.className = 'video-card';
-
-                const btn = document.createElement('button');
-                btn.textContent = video.name;
-                btn.onclick = () => {
-                    errorDiv.textContent = '';
-                    errorDiv.classList.remove('show');
-                    player.src = video.url;
-                    player.play().catch(err => {
-                        errorDiv.textContent = `Error playing video: ${err.message}`;
-                        errorDiv.classList.add('show');
-                        console.error('Playback error:', err);
-                    });
-                    card.classList.toggle('active');
-                };
-
-                const downloadBtn = document.createElement('button');
-                downloadBtn.textContent = 'Download';
-                downloadBtn.onclick = (e) => {
-                    e.stopPropagation(); // Prevent card activation
-                    const link = document.createElement('a');
-                    link.href = video.url + '?download=true'; // Signal download intent
-                    link.download = video.name; // Set filename
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                };
-
-                const details = document.createElement('div');
-                details.className = 'video-details';
-                // Placeholder for future details
-                // details.innerHTML = `<p>Duration: ${video.duration || 'N/A'}</p><p>${video.description || 'No description'}</p>`;
-
-                card.appendChild(btn);
-                card.appendChild(downloadBtn); // Add download button
-                card.appendChild(details);
-                videoList.appendChild(card);
-            });
-        })
-        .catch(err => {
-            loadingDiv.classList.remove('show');
-            errorDiv.textContent = `Error loading video list: ${err.message}`;
-            errorDiv.classList.add('show');
+            renderVideoGrid();
+        } catch (err) {
+            loadingDiv.style.display = 'none';
+            errorDiv.textContent = `Error loading videos: ${err.message}`;
             console.error('Fetch error:', err);
+        }
+    }
+
+    // Render video grid on home page
+    function renderVideoGrid() {
+        videoGrid.innerHTML = '';
+        allVideos.forEach(video => {
+            const card = document.createElement('div');
+            card.className = 'video-card';
+            card.innerHTML = `
+                    <div class="thumbnail-placeholder" onclick="showVideoPage('${video.url}', '${video.name}')"></div>
+                    <div class="video-info">
+                        <h3>${video.name}</h3>
+                        <div class="buttons">
+                            <button onclick="showVideoPage('${video.url}', '${video.name}')">Watch</button>
+                            <a href="${video.url}?download=true" download="${video.name}">Download</a>
+                        </div>
+                    </div>
+                `;
+            videoGrid.appendChild(card);
+        });
+    }
+
+    // Show video page with recommendations
+    function showVideoPage(url, name) {
+        history.pushState({ page: 'video', url, name }, '', `/video/${encodeURIComponent(name)}`);
+        videoGrid.style.display = 'none';
+        videoPage.style.display = 'flex';
+        videoTitle.textContent = name;
+        player.src = url;
+        downloadLink.href = `${url}?download=true`;
+        downloadLink.setAttribute('download', name);
+        player.play().catch(err => {
+            errorDiv.textContent = `Error playing video: ${err.message}`;
+            console.error('Playback error:', err);
         });
 
-    // Log video errors
+        // Render recommendations (all other videos)
+        recommendations.innerHTML = '';
+        allVideos
+            .filter(video => video.url !== url)
+            .forEach(video => {
+                const recCard = document.createElement('div');
+                recCard.className = 'recommendation-card';
+                recCard.innerHTML = `
+                        <div class="thumbnail-placeholder" onclick="showVideoPage('${video.url}', '${video.name}')"></div>
+                        <div>
+                            <h4>${video.name}</h4>
+                        </div>
+                    `;
+                recCard.onclick = () => showVideoPage(video.url, video.name);
+                recommendations.appendChild(recCard);
+            });
+    }
+
+    // Handle browser back/forward navigation
+    window.onpopstate = function(event) {
+        if (event.state && event.state.page === 'video') {
+            showVideoPage(event.state.url, event.state.name);
+        } else {
+            videoGrid.style.display = 'grid';
+            videoPage.style.display = 'none';
+            history.pushState({ page: 'home' }, '', '/');
+        }
+    };
+
+    // Handle video errors
     player.addEventListener('error', () => {
         errorDiv.textContent = `Video error: ${player.error ? player.error.message : 'Unknown error'}`;
-        errorDiv.classList.add('show');
     });
+
+    // Load videos on page load
+    loadVideos();
 </script>
 </body>
 </html>

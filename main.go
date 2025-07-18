@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -30,6 +31,7 @@ func main() {
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 	http.HandleFunc("/videos", videoListHandler)
 	http.HandleFunc("/video/", streamVideoHandler)
+	http.HandleFunc("/upload", uploadHandler) // New upload endpoint
 
 	fmt.Println("📡 GoStream running at http://localhost:8888")
 	log.Fatal(http.ListenAndServe(":8888", nil))
@@ -65,6 +67,12 @@ func streamVideoHandler(w http.ResponseWriter, r *http.Request) {
 	key := strings.TrimPrefix(r.URL.Path, "/video/")
 	if key == "" {
 		http.Error(w, "Video key is missing", http.StatusBadRequest)
+		return
+	}
+
+	// Check for download query parameter
+	if r.URL.Query().Get("download") == "true" {
+		serveDownload(w, r, key)
 		return
 	}
 
@@ -174,6 +182,114 @@ func streamVideoHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("io.Copy error for %s with range %s: %v", key, rangeHeader, err)
 	}
+}
+
+// Serve video file for download
+func serveDownload(w http.ResponseWriter, r *http.Request, key string) {
+	// Get object metadata
+	head, err := s3Client.HeadObject(context.TODO(), &s3.HeadObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		log.Printf("HeadObject error for %s: %v", key, err)
+		http.Error(w, fmt.Sprintf("File not found: %v", err), http.StatusNotFound)
+		return
+	}
+
+	// Set headers for download
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Length", fmt.Sprintf("%d", *head.ContentLength))
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", key))
+
+	// Get the object
+	out, err := s3Client.GetObject(context.TODO(), &s3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		log.Printf("GetObject error for %s: %v", key, err)
+		http.Error(w, fmt.Sprintf("Error retrieving file: %v", err), http.StatusInternalServerError)
+		return
+	}
+	defer out.Body.Close()
+
+	// Stream the file to the client
+	_, err = io.Copy(w, out.Body)
+	if err != nil {
+		log.Printf("io.Copy error for %s: %v", key, err)
+	}
+}
+
+// Handle video uploads
+func uploadHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse multipart form with a reasonable size limit (e.g., 5GB)
+	err := r.ParseMultipartForm(5 << 30) // 5GB
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error parsing form: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	// Get all files from the form
+	files := r.MultipartForm.File["videos"]
+	if len(files) == 0 {
+		http.Error(w, "No video files uploaded", http.StatusBadRequest)
+		return
+	}
+
+	// Process each uploaded file
+	for _, fileHeader := range files {
+		// Open the file
+		file, err := fileHeader.Open()
+		if err != nil {
+			log.Printf("Error opening file %s: %v", fileHeader.Filename, err)
+			http.Error(w, fmt.Sprintf("Error opening file %s: %v", fileHeader.Filename, err), http.StatusInternalServerError)
+			return
+		}
+		defer file.Close()
+
+		// Validate file extension
+		if !strings.HasSuffix(strings.ToLower(fileHeader.Filename), ".mp4") &&
+			!strings.HasSuffix(strings.ToLower(fileHeader.Filename), ".webm") {
+			http.Error(w, fmt.Sprintf("Invalid file type for %s. Only .mp4 and .webm allowed.", fileHeader.Filename), http.StatusBadRequest)
+			return
+		}
+
+		// Generate unique key with timestamp
+		timestamp := time.Now().Format("20060102T150405")
+		key := fmt.Sprintf("%s-%s", timestamp, fileHeader.Filename)
+
+		// Upload to S3
+		_, err = s3Client.PutObject(context.TODO(), &s3.PutObjectInput{
+			Bucket:      aws.String(bucket),
+			Key:         aws.String(key),
+			Body:        file,
+			ContentType: aws.String(determineContentType(fileHeader.Filename)),
+		})
+		if err != nil {
+			log.Printf("Error uploading %s to S3: %v", key, err)
+			http.Error(w, fmt.Sprintf("Error uploading %s: %v", fileHeader.Filename, err), http.StatusInternalServerError)
+			return
+		}
+		log.Printf("Successfully uploaded %s to S3", key)
+	}
+
+	// Send success response
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(`{"message":"Videos uploaded successfully"}`))
+}
+
+// Determine Content-Type based on file extension
+func determineContentType(filename string) string {
+	if strings.HasSuffix(strings.ToLower(filename), ".webm") {
+		return "video/webm"
+	}
+	return "video/mp4"
 }
 
 // Helper function to parse range values

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Videos - GoStream</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #2c3e50, #3498db);
+      color: #ecf0f1;
+      padding: 2rem;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    h1 {
+      text-align: center;
+      color: #fff;
+      margin-bottom: 2rem;
+      font-size: 2.5rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .upload-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 2rem;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(5px);
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      padding: 0.5rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 5px;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    button {
+      width: 100%;
+      padding: 1rem;
+      background: #3498db;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #2980b9;
+    }
+
+    .loading, .success, .error {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 1rem;
+      display: none;
+    }
+
+    .loading.show, .success.show, .error.show {
+      display: block;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    .success {
+      color: #2ecc71;
+    }
+
+    .error {
+      color: #e74c3c;
+    }
+
+    .home-link {
+      display: block;
+      text-align: center;
+      margin-top: 1.5rem;
+      color: #3498db;
+      text-decoration: none;
+      font-size: 1rem;
+    }
+
+    .home-link:hover {
+      text-decoration: underline;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 600px) {
+      .upload-container {
+        padding: 1.5rem;
+      }
+      h1 {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<h1>📤 Upload Videos</h1>
+<div class="upload-container">
+  <form id="uploadForm">
+    <div class="form-group">
+      <label for="videos">Select Videos (.mp4 or .webm)</label>
+      <input type="file" id="videos" name="videos" accept=".mp4,.webm" multiple required>
+    </div>
+    <button type="submit">Upload Videos</button>
+  </form>
+  <div class="loading" id="loading">
+    <span>Uploading...</span>
+    <div class="spinner"></div>
+  </div>
+  <div class="success" id="success"></div>
+  <div class="error" id="error"></div>
+  <a href="/" class="home-link">Back to Home</a>
+</div>
+
+<script>
+  const uploadForm = document.getElementById('uploadForm');
+  const loadingDiv = document.getElementById('loading');
+  const successDiv = document.getElementById('success');
+  const errorDiv = document.getElementById('error');
+
+  uploadForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorDiv.textContent = '';
+    successDiv.textContent = '';
+    loadingDiv.classList.add('show');
+
+    const formData = new FormData(uploadForm);
+    try {
+      const response = await fetch('/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      loadingDiv.classList.remove('show');
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Upload failed: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      successDiv.textContent = result.message;
+      successDiv.classList.add('show');
+      uploadForm.reset();
+    } catch (err) {
+      loadingDiv.classList.remove('show');
+      errorDiv.textContent = `Error: ${err.message}`;
+      errorDiv.classList.add('show');
+      console.error('Upload error:', err);
+    }
+  });
+</script>
+</body>
+</html>
