@@ -16,7 +16,7 @@ import (
 
 var (
 	s3Client *s3.Client
-	bucket   = "cf-templates-1k885sy6u2djs-ap-south-1" // Replace with your bucket name
+	bucket   = "Your-s3-bucket-name" // Replace with your bucket name
 )
 
 func main() {
